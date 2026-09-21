@@ -13,7 +13,7 @@ pitching_df["date"] = pd.to_datetime(pitching_df["date"].astype(str), format="%Y
 
 # DataFrame since 2000
 pitching_df["season"] = pitching_df["date"].dt.year
-pitching_df_since_2000 = pitching_df[pitching_df["season"] >= 2000]
+pitching_df_since_2000 = pitching_df[(pitching_df["season"] >= 2000) & (pitching_df["season"] <= 2025)]
 
 # Data Cleaning
 # print(pitching_df_since_2000.isna().sum())
@@ -23,6 +23,9 @@ pitching_df_since_2000[["wp", "lp", "save", "p_gs", "p_gf", "p_cg"]] = \
 
 # Identifying Qualified Starting Pitchers in Each Season
 regular_df = pitching_df_since_2000[pitching_df_since_2000["gametype"] == "regular"]
-
-
-
+starters_df = regular_df.groupby(["id", "season"]).agg(
+    starts = ("p_gs", "sum"),
+    outs = ("p_ipouts", "sum")
+).reset_index()
+qualified_starters_df = starters_df[(starters_df["starts"] >= 20) & (starters_df["outs"] >= 486)]
+# print(qualified_starters_df)
