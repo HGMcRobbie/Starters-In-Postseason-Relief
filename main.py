@@ -29,3 +29,21 @@ starters_df = regular_df.groupby(["id", "season"]).agg(
 ).reset_index()
 qualified_starters_df = starters_df[(starters_df["starts"] >= 20) & (starters_df["outs"] >= 486)]
 # print(qualified_starters_df)
+
+# Identifying Instances where these Starters pitched in relief in the postseason
+# print(pitching_df_since_2000["gametype"].value_counts())
+playoff_game_types = ["divisionseries", "lcs", "worldseries", "wildcard", "playoff"] # playoff corresponds to game 163s,
+# which we will include as those are strategically more similar to playoff games than regular season games
+postseason_df = pitching_df_since_2000[pitching_df_since_2000["gametype"].isin(playoff_game_types)]
+# print(postseason_df)
+# Combining the starters who pitched in relief in the postseason into one dataframe
+starters_in_relief_appearances = []
+for index, appearance in postseason_df.iterrows():
+    if appearance["p_seq"] > 1:
+        matching_starter = qualified_starters_df[
+            (qualified_starters_df["id"] == appearance["id"]) &
+            (qualified_starters_df["season"] == appearance["season"])
+        ]
+        if len(matching_starter) > 0:
+            starters_in_relief_appearances.append(appearance)
+# print(len(starters_in_relief_appearances))
