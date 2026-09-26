@@ -52,12 +52,15 @@ for index, appearance in postseason_df.iterrows():
 starters_in_relief_df = pd.DataFrame(starters_in_relief_appearances).reset_index(drop=True)
 # print(starters_in_relief_df)
 
+# Research Questions
+
 # Which pitchers do it most?
 appearances_by_pitcher = (starters_in_relief_df["id"].value_counts())
-print(appearances_by_pitcher[appearances_by_pitcher > 6])
+# print(appearances_by_pitcher[appearances_by_pitcher > 6])
 
 # How many of these guys started a game in that same series or in that same playoffs?
 
 
 # Has this become more or less common over time?
-
+count_by_season = (starters_in_relief_df.groupby("season")["id"].count())
+print(count_by_season)
