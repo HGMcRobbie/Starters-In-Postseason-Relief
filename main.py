@@ -63,4 +63,18 @@ appearances_by_pitcher = (starters_in_relief_df["id"].value_counts())
 
 # Has this become more or less common over time?
 count_by_season = (starters_in_relief_df.groupby("season")["id"].count())
-print(count_by_season)
+# print(count_by_season)
+
+# Determining ERA, WHIP, and other basic stats for the starters in relief appearances
+starters_in_relief_outs = starters_in_relief_df["p_ipouts"].sum()
+starters_in_relief_earned_runs = starters_in_relief_df["p_er"].sum()
+starters_in_relief_hits = starters_in_relief_df["p_h"].sum()
+starters_in_relief_walks = starters_in_relief_df["p_w"].sum()
+
+starters_in_relief_era = (starters_in_relief_earned_runs * 27) / starters_in_relief_outs
+starters_in_relief_whip = ( (starters_in_relief_hits + starters_in_relief_walks) * 3) / starters_in_relief_outs
+
+# print(round(starters_in_relief_era, 2)) # >>> 4.05
+# print(round(starters_in_relief_whip, 2)) # >>> 1.35
+
+
