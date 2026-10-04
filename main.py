@@ -36,8 +36,9 @@ playoff_game_types = ["divisionseries", "lcs", "worldseries", "wildcard", "playo
 # which we will include as those are strategically more similar to playoff games than regular season games
 postseason_df = pitching_df_since_2000[pitching_df_since_2000["gametype"].isin(playoff_game_types)]
 # print(postseason_df)
-# Combining the starters who pitched in relief in the postseason into one dataframe
+# Combining the starters and relievers who pitched in relief into separate dataframes
 starters_in_relief_appearances = []
+relievers_in_relief_appearances = []
 for index, appearance in postseason_df.iterrows():
     if appearance["p_seq"] > 1:
         matching_starter = qualified_starters_df[
@@ -46,11 +47,16 @@ for index, appearance in postseason_df.iterrows():
         ]
         if len(matching_starter) > 0:
             starters_in_relief_appearances.append(appearance)
+        else:
+            relievers_in_relief_appearances.append(appearance)
 # print(len(starters_in_relief_appearances))
+# print(len(relievers_in_relief_appearances))
 
-# Convert list into DataFrame
+# Convert lists into DataFrame
 starters_in_relief_df = pd.DataFrame(starters_in_relief_appearances).reset_index(drop=True)
+relievers_in_relief_df = pd.DataFrame(relievers_in_relief_appearances).reset_index(drop=True)
 # print(starters_in_relief_df)
+# print(relievers_in_relief_df)
 
 # Research Questions
 
@@ -65,7 +71,7 @@ appearances_by_pitcher = (starters_in_relief_df["id"].value_counts())
 count_by_season = (starters_in_relief_df.groupby("season")["id"].count())
 # print(count_by_season)
 
-# Determining ERA, WHIP, and other basic stats for the starters in relief appearances
+# Determining ERA and WHIP for the starters in relief appearances
 starters_in_relief_outs = starters_in_relief_df["p_ipouts"].sum()
 starters_in_relief_earned_runs = starters_in_relief_df["p_er"].sum()
 starters_in_relief_hits = starters_in_relief_df["p_h"].sum()
@@ -77,4 +83,20 @@ starters_in_relief_whip = ( (starters_in_relief_hits + starters_in_relief_walks)
 # print(round(starters_in_relief_era, 2)) # >>> 4.05
 # print(round(starters_in_relief_whip, 2)) # >>> 1.35
 
+# Determining ERA and WHIP for the relievers in relief appearances
+relievers_in_relief_outs = relievers_in_relief_df["p_ipouts"].sum()
+relievers_in_relief_earned_runs = relievers_in_relief_df["p_er"].sum()
+relievers_in_relief_hits = relievers_in_relief_df["p_h"].sum()
+relievers_in_relief_walks = relievers_in_relief_df["p_w"].sum()
 
+relievers_in_relief_era = (relievers_in_relief_earned_runs * 27) / relievers_in_relief_outs
+relievers_in_relief_whip = ((relievers_in_relief_hits + relievers_in_relief_walks) * 3) / relievers_in_relief_outs
+
+# print(round(relievers_in_relief_era, 2)) # >>> 3.56
+# print(round(relievers_in_relief_whip, 2)) # >>> 1.25
+
+# OTHER PITCHING STRATEGIES TO ANALYZE
+# 1. Starters in relief
+# 2. Starters pitching 100+ pitches
+# 3. Bullpen Games # Maybe >= 5 Pitchers and Starter went <= 3 innings ?? 
+# 4. Starters pitching on little rest # Need to calculate the date and determine what "little" rest means - Maybe 2 or less full days of rest
