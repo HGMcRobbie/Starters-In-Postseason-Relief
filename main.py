@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 pitching_df = pd.read_csv("pitching.csv")
 pitching_df["date"] = pd.to_datetime(pitching_df["date"].astype(str), format="%Y%m%d")
 
-# DataFrame since 2000
+# DataFrame since 2000, excluding 2020
 pitching_df["season"] = pitching_df["date"].dt.year
-pitching_df_since_2000 = pitching_df[(pitching_df["season"] >= 2000) & (pitching_df["season"] <= 2025)]
+pitching_df_since_2000 = pitching_df[(pitching_df["season"] >= 2000) & (pitching_df["season"] <= 2025) & (pitching_df["season"] != 2020)]
 
 # Data Cleaning
 # print(pitching_df_since_2000.isna().sum())
@@ -36,9 +36,10 @@ playoff_game_types = ["divisionseries", "lcs", "worldseries", "wildcard", "playo
 # which we will include as those are strategically more similar to playoff games than regular season games
 postseason_df = pitching_df_since_2000[pitching_df_since_2000["gametype"].isin(playoff_game_types)]
 # print(postseason_df)
-# Combining the starters and relievers who pitched in relief into separate dataframes
-starters_in_relief_appearances = []
-relievers_in_relief_appearances = []
+# Combining the qualified starters and all other pitchers who appeared in relief into separate dataframes
+qualified_starters_in_relief_appearances = []
+all_others_in_relief_appearances = []
+
 for index, appearance in postseason_df.iterrows():
     if appearance["p_seq"] > 1:
         matching_starter = qualified_starters_df[
@@ -46,54 +47,54 @@ for index, appearance in postseason_df.iterrows():
             (qualified_starters_df["season"] == appearance["season"])
         ]
         if len(matching_starter) > 0:
-            starters_in_relief_appearances.append(appearance)
+            qualified_starters_in_relief_appearances.append(appearance)
         else:
-            relievers_in_relief_appearances.append(appearance)
-# print(len(starters_in_relief_appearances))
-# print(len(relievers_in_relief_appearances))
+            all_others_in_relief_appearances.append(appearance)
+# print(len(qualified_starters_in_relief_appearances))
+# print(len(all_others_in_relief_appearances))
 
-# Convert lists into DataFrame
-starters_in_relief_df = pd.DataFrame(starters_in_relief_appearances).reset_index(drop=True)
-relievers_in_relief_df = pd.DataFrame(relievers_in_relief_appearances).reset_index(drop=True)
-# print(starters_in_relief_df)
-# print(relievers_in_relief_df)
+# Convert lists into DataFrames
+qualified_starters_in_relief_df = pd.DataFrame(qualified_starters_in_relief_appearances).reset_index(drop=True)
+all_others_in_relief_df = pd.DataFrame(all_others_in_relief_appearances).reset_index(drop=True)
+# print(qualified_starters_in_relief_df)
+# print(all_others_in_relief_df)
 
 # Research Questions
 
 # Which pitchers do it most?
-appearances_by_pitcher = (starters_in_relief_df["id"].value_counts())
+appearances_by_pitcher = (qualified_starters_in_relief_df["id"].value_counts())
 # print(appearances_by_pitcher[appearances_by_pitcher > 6])
 
 # How many of these guys started a game in that same series or in that same playoffs?
 
 
 # Has this become more or less common over time?
-count_by_season = (starters_in_relief_df.groupby("season")["id"].count())
+count_by_season = (qualified_starters_in_relief_df.groupby("season")["id"].count())
 # print(count_by_season)
 
-# Determining ERA and WHIP for the starters in relief appearances
-starters_in_relief_outs = starters_in_relief_df["p_ipouts"].sum()
-starters_in_relief_earned_runs = starters_in_relief_df["p_er"].sum()
-starters_in_relief_hits = starters_in_relief_df["p_h"].sum()
-starters_in_relief_walks = starters_in_relief_df["p_w"].sum()
+# Determining ERA and WHIP for the qualified starters in relief
+qualified_starters_in_relief_outs = qualified_starters_in_relief_df["p_ipouts"].sum()
+qualified_starters_in_relief_earned_runs = qualified_starters_in_relief_df["p_er"].sum()
+qualified_starters_in_relief_hits = qualified_starters_in_relief_df["p_h"].sum()
+qualified_starters_in_relief_walks = qualified_starters_in_relief_df["p_w"].sum()
 
-starters_in_relief_era = (starters_in_relief_earned_runs * 27) / starters_in_relief_outs
-starters_in_relief_whip = ( (starters_in_relief_hits + starters_in_relief_walks) * 3) / starters_in_relief_outs
+qualified_starters_in_relief_era = (qualified_starters_in_relief_earned_runs * 27) / qualified_starters_in_relief_outs
+qualified_starters_in_relief_whip = ((qualified_starters_in_relief_hits + qualified_starters_in_relief_walks) * 3) / qualified_starters_in_relief_outs
 
-# print(round(starters_in_relief_era, 2)) # >>> 4.05
-# print(round(starters_in_relief_whip, 2)) # >>> 1.35
+# print(round(qualified_starters_in_relief_era, 2)) # >>> 4.05
+# print(round(qualified_starters_in_relief_whip, 2)) # >>> 1.35
 
-# Determining ERA and WHIP for the relievers in relief appearances
-relievers_in_relief_outs = relievers_in_relief_df["p_ipouts"].sum()
-relievers_in_relief_earned_runs = relievers_in_relief_df["p_er"].sum()
-relievers_in_relief_hits = relievers_in_relief_df["p_h"].sum()
-relievers_in_relief_walks = relievers_in_relief_df["p_w"].sum()
+# Determining ERA and WHIP for all others in relief
+all_others_in_relief_outs = all_others_in_relief_df["p_ipouts"].sum()
+all_others_in_relief_earned_runs = all_others_in_relief_df["p_er"].sum()
+all_others_in_relief_hits = all_others_in_relief_df["p_h"].sum()
+all_others_in_relief_walks = all_others_in_relief_df["p_w"].sum()
 
-relievers_in_relief_era = (relievers_in_relief_earned_runs * 27) / relievers_in_relief_outs
-relievers_in_relief_whip = ((relievers_in_relief_hits + relievers_in_relief_walks) * 3) / relievers_in_relief_outs
+all_others_in_relief_era = (all_others_in_relief_earned_runs * 27) / all_others_in_relief_outs
+all_others_in_relief_whip = ((all_others_in_relief_hits + all_others_in_relief_walks) * 3) / all_others_in_relief_outs
 
-# print(round(relievers_in_relief_era, 2)) # >>> 3.56
-# print(round(relievers_in_relief_whip, 2)) # >>> 1.25
+# print(round(all_others_in_relief_era, 2)) # >>> 3.52
+# print(round(all_others_in_relief_whip, 2)) # >>> 1.24
 
 # OTHER PITCHING STRATEGIES TO ANALYZE
 # 1. Starters in relief
