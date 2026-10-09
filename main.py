@@ -96,6 +96,39 @@ all_others_in_relief_whip = ((all_others_in_relief_hits + all_others_in_relief_w
 # print(round(all_others_in_relief_era, 2)) # >>> 3.52
 # print(round(all_others_in_relief_whip, 2)) # >>> 1.24
 
+# Determining K% and BB% for Qualified Starters
+qualified_starters_in_relief_strikeouts = qualified_starters_in_relief_df["p_k"].sum()
+qualified_starters_in_relief_batters_faced = qualified_starters_in_relief_df["p_bfp"].sum()
+
+qualified_starters_in_relief_k_percentage = (
+    qualified_starters_in_relief_strikeouts /
+    qualified_starters_in_relief_batters_faced
+) * 100
+# print(round(qualified_starters_in_relief_k_percentage, 2)) # >>> 21.49%
+
+qualified_starters_in_relief_bb_percentage = (
+    qualified_starters_in_relief_walks /
+    qualified_starters_in_relief_batters_faced
+) * 100
+# print(round(qualified_starters_in_relief_bb_percentage)) # >>> 9.76%
+
+# Determining K% and BB% for All Other Pitchers
+all_others_in_relief_strikeouts = all_others_in_relief_df["p_k"].sum()
+all_others_in_relief_batters_faced = all_others_in_relief_df["p_bfp"].sum()
+
+all_others_in_relief_k_percentage = (
+    all_others_in_relief_strikeouts /
+    all_others_in_relief_batters_faced
+) * 100
+# print(round(all_others_in_relief_k_percentage, 2)) # >>> 23.33%
+
+all_others_in_relief_bb_percentage = (
+    all_others_in_relief_walks /
+    all_others_in_relief_batters_faced
+) * 100
+# print(round(all_others_in_relief_bb_percentage, 2)) # >>> 9.47%
+
+
 # OTHER PITCHING STRATEGIES TO ANALYZE
 # 1. Starters in relief
 # 2. Starters pitching 100+ pitches
