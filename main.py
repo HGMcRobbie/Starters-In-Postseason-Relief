@@ -1,5 +1,5 @@
 # Hunter Galusha-McRobbie
-# Starters-In-Postseason-Relief
+# Analyzing Postseason Pitching Strategies
 # 18 September 2026 -
 
 # Import Statements
@@ -7,11 +7,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# --------------------
+# Introduction
+# --------------------
+
 # Initial DataFrame
 pitching_df = pd.read_csv("pitching.csv")
 pitching_df["date"] = pd.to_datetime(pitching_df["date"].astype(str), format="%Y%m%d")
 
-# DataFrame since 2000, excluding 2020
+# DataFrame from 2000-2025, excluding 2020
 pitching_df["season"] = pitching_df["date"].dt.year
 pitching_df_since_2000 = pitching_df[(pitching_df["season"] >= 2000) & (pitching_df["season"] <= 2025) & (pitching_df["season"] != 2020)]
 
@@ -21,8 +25,29 @@ pitching_df_since_2000[["wp", "lp", "save", "p_gs", "p_gf", "p_cg"]] = \
     (pitching_df_since_2000[["wp", "lp", "save", "p_gs", "p_gf", "p_cg"]].fillna(0))
 # print(pitching_df_since_2000.isna().sum())
 
-# Identifying Qualified Starting Pitchers in Each Season
+# Creating Regular Season DataFrame
 regular_df = pitching_df_since_2000[pitching_df_since_2000["gametype"] == "regular"]
+
+# Creating Postseason DataFrame
+# print(pitching_df_since_2000["gametype"].value_counts())
+playoff_game_types = ["divisionseries", "lcs", "worldseries", "wildcard", "playoff"] # playoff corresponds to game 163s,
+# which we will include as those are strategically more similar to playoff games than regular season games
+postseason_df = pitching_df_since_2000[pitching_df_since_2000["gametype"].isin(playoff_game_types)]
+
+# Creating one row for each team in each postseason game
+postseason_team_games_df = postseason_df.drop_duplicates(
+    subset=["gid", "team"]).reset_index(drop=True)
+
+
+# --------------------
+# Part 1 - Bringing in the Big Guns: Starters in Relief
+# --------------------
+
+# Definition
+
+# DataFrames
+
+# Identifying Qualified Starting Pitchers in Each Season
 starters_df = regular_df.groupby(["id", "season"]).agg(
     starts = ("p_gs", "sum"),
     outs = ("p_ipouts", "sum")
@@ -31,12 +56,6 @@ qualified_starters_df = starters_df[(starters_df["starts"] >= 20) & (starters_df
 # print(qualified_starters_df)
 
 # Identifying Instances where these Starters pitched in relief in the postseason
-# print(pitching_df_since_2000["gametype"].value_counts())
-playoff_game_types = ["divisionseries", "lcs", "worldseries", "wildcard", "playoff"] # playoff corresponds to game 163s,
-# which we will include as those are strategically more similar to playoff games than regular season games
-postseason_df = pitching_df_since_2000[pitching_df_since_2000["gametype"].isin(playoff_game_types)]
-# print(postseason_df)
-# Combining the qualified starters and all other pitchers who appeared in relief into separate dataframes
 qualified_starters_in_relief_appearances = []
 all_others_in_relief_appearances = []
 
@@ -59,20 +78,16 @@ all_others_in_relief_df = pd.DataFrame(all_others_in_relief_appearances).reset_i
 # print(qualified_starters_in_relief_df)
 # print(all_others_in_relief_df)
 
-# Research Questions
+# a) Most Appearances
+qualified_starters_in_relief_appearances_by_pitcher = (qualified_starters_in_relief_df["id"].value_counts())
+# print(qualified_startesr_in_relief_appearances_by_pitcher[qualified_starters_in_relief_appearances_by_pitcher > 6])
 
-# Which pitchers do it most?
-appearances_by_pitcher = (qualified_starters_in_relief_df["id"].value_counts())
-# print(appearances_by_pitcher[appearances_by_pitcher > 6])
+# b) Over Time
+qualified_starter_in_relief_count_by_season = (qualified_starters_in_relief_df.groupby("season")["id"].count())
+# print(qualified_starter_in_relief_count_by_season)
 
-# How many of these guys started a game in that same series or in that same playoffs?
-
-
-# Has this become more or less common over time?
-count_by_season = (qualified_starters_in_relief_df.groupby("season")["id"].count())
-# print(count_by_season)
-
-# Determining ERA and WHIP for the qualified starters in relief
+# c) ERA and WHIP
+# Determining ERA and WHIP for Qualified Starters
 qualified_starters_in_relief_outs = qualified_starters_in_relief_df["p_ipouts"].sum()
 qualified_starters_in_relief_earned_runs = qualified_starters_in_relief_df["p_er"].sum()
 qualified_starters_in_relief_hits = qualified_starters_in_relief_df["p_h"].sum()
@@ -96,6 +111,7 @@ all_others_in_relief_whip = ((all_others_in_relief_hits + all_others_in_relief_w
 # print(round(all_others_in_relief_era, 2)) # >>> 3.52
 # print(round(all_others_in_relief_whip, 2)) # >>> 1.24
 
+# d) K% and BB%
 # Determining K% and BB% for Qualified Starters
 qualified_starters_in_relief_strikeouts = qualified_starters_in_relief_df["p_k"].sum()
 qualified_starters_in_relief_batters_faced = qualified_starters_in_relief_df["p_bfp"].sum()
@@ -128,11 +144,8 @@ all_others_in_relief_bb_percentage = (
 ) * 100
 # print(round(all_others_in_relief_bb_percentage, 2)) # >>> 9.47%
 
+# e) Win%
 # Determining Win% with and without bringing in a qualified starter in relief
-
-# Creating one row for each team in each postseason game
-postseason_team_games_df = postseason_df.drop_duplicates(
-    subset=["gid", "team"]).reset_index(drop=True)
 
 # Creating one row for each team-game where a qualified starter appeared in relief
 qualified_starter_team_games_df = qualified_starters_in_relief_df.drop_duplicates(
@@ -178,6 +191,71 @@ win_percentage_without_qualified_starter = (
 
 # print(len(team_games_without_qualified_starter_df)) # >>> 1525
 # print(round(win_percentage_without_qualified_starter, 2)) # >>> 52.33%
+
+
+# --------------------
+# Part 2 - Let Him Ride: Extended Starts
+# --------------------
+
+# Definition
+# Extended Start: Starter records at least 21 outs, equivalent to 7+ innings pitched
+
+# DataFrames
+
+# a) Most Appearances
+
+# b) Over Time
+
+# c) ERA and WHIP
+
+# d) K% and BB%
+
+# e) Win%
+
+# --------------------
+# Part 3 - All Hands on Deck: Bullpen Games
+# --------------------
+
+# Definition
+
+# DataFrames
+
+# a) Most Appearances
+
+# b) Over Time
+
+# c) ERA and WHIP
+
+# d) K% and BB%
+
+# e) Win%
+
+
+# --------------------
+# Part 4 - No Days Off: Starters on Short Rest
+# --------------------
+
+# Definition
+
+# DataFrames
+
+# a) Most Appearances
+
+# b) Over Time
+
+# c) ERA and WHIP
+
+# d) K% and BB%
+
+# e) Win%
+
+
+# --------------------
+# Conclusion
+# --------------------
+
+
+
 
 
 # OTHER PITCHING STRATEGIES TO ANALYZE
