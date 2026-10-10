@@ -110,7 +110,7 @@ qualified_starters_in_relief_bb_percentage = (
     qualified_starters_in_relief_walks /
     qualified_starters_in_relief_batters_faced
 ) * 100
-# print(round(qualified_starters_in_relief_bb_percentage)) # >>> 9.76%
+# print(round(qualified_starters_in_relief_bb_percentage, 2)) # >>> 9.76%
 
 # Determining K% and BB% for All Other Pitchers
 all_others_in_relief_strikeouts = all_others_in_relief_df["p_k"].sum()
@@ -128,9 +128,63 @@ all_others_in_relief_bb_percentage = (
 ) * 100
 # print(round(all_others_in_relief_bb_percentage, 2)) # >>> 9.47%
 
+# Determining Win% with and without bringing in a qualified starter in relief
+
+# Creating one row for each team in each postseason game
+postseason_team_games_df = postseason_df.drop_duplicates(
+    subset=["gid", "team"]).reset_index(drop=True)
+
+# Creating one row for each team-game where a qualified starter appeared in relief
+qualified_starter_team_games_df = qualified_starters_in_relief_df.drop_duplicates(
+    subset=["gid", "team"]).reset_index(drop=True)
+
+team_games_with_qualified_starter = []
+team_games_without_qualified_starter = []
+
+for index, team_game in postseason_team_games_df.iterrows():
+    matching_team_game = qualified_starter_team_games_df[
+        (qualified_starter_team_games_df["gid"] == team_game["gid"]) &
+        (qualified_starter_team_games_df["team"] == team_game["team"])
+    ]
+
+    if len(matching_team_game) > 0:
+        team_games_with_qualified_starter.append(team_game)
+    else:
+        team_games_without_qualified_starter.append(team_game)
+
+# Convert lists into DataFrames
+team_games_with_qualified_starter_df = pd.DataFrame(
+    team_games_with_qualified_starter).reset_index(drop=True)
+
+team_games_without_qualified_starter_df = pd.DataFrame(
+    team_games_without_qualified_starter).reset_index(drop=True)
+
+# Calculating team win percentage for each group
+wins_with_qualified_starter = team_games_with_qualified_starter_df["win"].sum()
+wins_without_qualified_starter = team_games_without_qualified_starter_df["win"].sum()
+
+win_percentage_with_qualified_starter = (
+    wins_with_qualified_starter /
+    len(team_games_with_qualified_starter_df)
+) * 100
+
+win_percentage_without_qualified_starter = (
+    wins_without_qualified_starter /
+    len(team_games_without_qualified_starter_df)
+) * 100
+
+# print(len(team_games_with_qualified_starter_df)) # >>> 259
+# print(round(win_percentage_with_qualified_starter, 2)) # >>> 36.29%
+
+# print(len(team_games_without_qualified_starter_df)) # >>> 1525
+# print(round(win_percentage_without_qualified_starter, 2)) # >>> 52.33%
+
 
 # OTHER PITCHING STRATEGIES TO ANALYZE
-# 1. Starters in relief
-# 2. Starters pitching 100+ pitches
-# 3. Bullpen Games # Maybe >= 5 Pitchers and Starter went <= 3 innings ?? 
-# 4. Starters pitching on little rest # Need to calculate the date and determine what "little" rest means - Maybe 2 or less full days of rest
+# 1. Bringing in the Big Guns: Starters in Relief
+# 2. Let Him Ride: Extended Starts
+# ---> 7+ Innings Pitched
+# 3. All Hands on Deck: Bullpen Games
+# ---> >= 5 Pitchers and Starter went <= 3 innings ??
+# 4. No Days Off: Starters on Short Rest
+# ---> Maybe 2 or less full days of rest
